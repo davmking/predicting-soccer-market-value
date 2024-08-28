@@ -1,0 +1,58 @@
+---
+title: "Data Re-Exploration"
+author: "David King"
+format: pdf
+---
+
+# Libraries and Data
+
+```{r Libraries}
+library(tidyverse)
+```
+
+
+```{r Load Data}
+players <- read.csv("players.csv")
+player_valuations <- read.csv("player_valuations.csv")
+appearances <- read.csv("appearances.csv")
+```
+
+
+# Data Exploration
+
+## Players
+
+```{r Data-Ex Players}
+glimpse(players)
+
+ggplot(players, aes(x = factor(last_season))) +
+  geom_bar() # Goes from 2013-2022; highest by a lot in 2022; weird (but understandable) break in 2020
+             # Pretty even per year until 2022 - doesn't actually increase that much over time
+             # I wonder if 2013 doesn't also encapsulate some earlier years? Need to cross-ref with the actual data source
+
+players %>%
+  filter(!is.na(country_of_birth) & country_of_birth != "") %>% 
+  count(country_of_birth) %>% 
+  arrange(desc(n)) %>% 
+  head(15) %>% 
+  ggplot(aes(x = n, y = reorder(country_of_birth, n))) +
+  geom_col()
+# All the pretty obvious western european countries
+# Intriguingly, the USSR still counts - I wonder if there's an issue where the older players in this dataset were born during the USSR and the later weren't
+# UK is split up into its countries
+
+
+players %>%
+  filter(!is.na(country_of_citizenship) & country_of_citizenship != "") %>% 
+  count(country_of_citizenship) %>% 
+  arrange(desc(n)) %>% 
+  head(15) %>% 
+  ggplot(aes(x = n, y = reorder(country_of_citizenship, n))) +
+  geom_col()
+# Looks pretty similar to me
+
+hist(as.Date(players$date_of_birth), breaks = 25) # Some old heads, little left-skewed
+```
+
+TODO: Look at missing data
+TODO: correlate counts of birth country & citizenship country (how do they determine citizenship, particularly for dual citizens?)
