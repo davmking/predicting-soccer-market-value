@@ -189,6 +189,27 @@ for(i in 1:21){
 }
 ```
 
+```{r Citizenship}
+birth_country <- players %>% 
+  filter(!is.na(country_of_birth) & country_of_birth != "") %>% 
+  count(country_of_birth)
+
+cit_country <- players %>% 
+  filter(!is.na(country_of_citizenship) & country_of_citizenship != "") %>% 
+  count(country_of_citizenship)
+
+corr_mat <- birth_country %>% 
+  full_join(cit_country, by = c("country_of_birth" = "country_of_citizenship")) %>% 
+  rename(birth = "n.x", cit = "n.y")
+
+corr_mat[is.na(corr_mat)] <- 0
+
+corr_mat %>% 
+  select(-country_of_birth) %>% 
+  cor() # Very high correlation
+```
+
+
 
 # Ideas
 
