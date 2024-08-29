@@ -273,6 +273,54 @@ for(i in 1:7){
 }
 ```
 
+## Appearances
+
+```{r Data Exp Appearances}
+glimpse(appearances)
+
+appearances %>% 
+  group_by(player_id) %>% 
+  count() %>% 
+  summary()
+# There's some big numbers in here
+
+appearances %>% 
+  group_by(game_id) %>% 
+  count() %>% 
+  summary()
+# Right, this shouldn't be a clean number - there are substitutes
+
+appearances %>% 
+  group_by(game_id) %>% 
+  count() %>% 
+  pull(n) %>% 
+  hist()
+# That's wack
+
+appearances %>% 
+  mutate(date = as.Date(date)) %>% 
+  ggplot(aes(x = date)) +
+  geom_density()
+# Cyclical by season
+```
+
+```{r Appearances Summary and Missing Values}
+appearances %>% 
+  mutate(player_id = factor(player_id),
+         game_id = factor(game_id),
+         appearance_id = factor(appearance_id),
+         competition_id = factor(competition_id),
+         player_club_id = factor(player_club_id),
+         date = as.Date(date),
+         player_pretty_name = factor(player_pretty_name)) %>% 
+  summary()
+
+for(i in 1:12){
+  testcol <- appearances[,i]
+  testcol <- replace(testcol, testcol == "", NA)
+  print(c(colnames(appearances[i]), sum(is.na(testcol))))
+}
+```
 
 
 
