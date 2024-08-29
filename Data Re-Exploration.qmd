@@ -52,7 +52,139 @@ players %>%
 # Looks pretty similar to me
 
 hist(as.Date(players$date_of_birth), breaks = 25) # Some old heads, little left-skewed
+
+players %>% 
+  filter(!is.na(position) & position != "") %>% 
+  count(position) %>% 
+  ggplot(aes(x = reorder(position, n), y = n)) +
+  geom_col()
+# Maybe a few more goalkeepers than I would have expected, but I'm not a soccer expert
+
+players %>% 
+  filter(!is.na(position) & position != "") %>% 
+  filter(!is.na(sub_position) & sub_position != "") %>% 
+  count(position, sub_position) %>% 
+  ggplot(aes(x = sub_position, y = n)) +
+  geom_col() +
+  facet_wrap(~position, scales = "free_y") +
+  coord_flip()
+# Curious how these are calculated - is it primary position? Does it vary by season?
+
+players %>% 
+  filter(!is.na(foot) & foot != "") %>% 
+  count(foot) %>% 
+  ggplot(aes(x = foot, y = n)) +
+  geom_col()
+# About as expected
+
+hist(players$height_in_cm) # Several players with missing data
+
+hist(players[players$height_in_cm > 0,]$height_in_cm)
+
+players %>% 
+  filter(!is.na(market_value_in_gbp)) %>% 
+  ggplot(aes(x = market_value_in_gbp)) +
+  geom_histogram() # Skewed just how you expect
+
+players %>% 
+  filter(!is.na(highest_market_value_in_gbp)) %>% 
+  ggplot(aes(x = highest_market_value_in_gbp)) +
+  geom_histogram() # Not quite as bad but still bad
+
+players %>% 
+  filter(!is.na(market_value_in_gbp)) %>% 
+  ggplot(aes(x = log(market_value_in_gbp))) +
+  geom_histogram(color = "white") # Almost not skewed
+
+players %>% 
+  filter(!is.na(market_value_in_gbp) & !is.na(highest_market_value_in_gbp)) %>% 
+  select(market_value_in_gbp, highest_market_value_in_gbp) %>% 
+  cor() # r = .8397, which is high but not as high as you might expect
+
+players %>% 
+  filter(!is.na(agent_name) & agent_name != "") %>% 
+  count(agent_name) %>% 
+  arrange(desc(n)) %>% 
+  head(15) %>% 
+  ggplot(aes(x = n, y = reorder(agent_name, n))) +
+  geom_col()
+
+top_agents <- players %>% 
+  filter(!is.na(agent_name) & agent_name != "") %>% 
+  count(agent_name) %>% 
+  arrange(desc(n)) %>% 
+  head(15)
+
+
+# Top earning agents - mean
+players %>% 
+  filter(agent_name %in% top_agents$agent_name) %>% 
+  group_by(agent_name) %>% 
+  summarize(n_players = n(),
+            avg_mv = mean(market_value_in_gbp, na.rm = T),
+            avg_high_mv = mean(highest_market_value_in_gbp, na.rm = T)) %>% 
+  ggplot(aes(y = reorder(agent_name, n_players), x = n_players,
+             fill = avg_mv)) +
+  geom_col() # Gestifute is weirdly high here
+
+players %>% 
+  filter(agent_name %in% top_agents$agent_name) %>% 
+  group_by(agent_name) %>% 
+  summarize(n_players = n(),
+            avg_mv = mean(market_value_in_gbp, na.rm = T),
+            avg_high_mv = mean(highest_market_value_in_gbp, na.rm = T)) %>% 
+  ggplot(aes(y = reorder(agent_name, n_players), x = n_players,
+             fill = avg_high_mv)) +
+  geom_col() # Gestifute is weirdly high here too
+
+
+# Top earning agents - median
+players %>% 
+  filter(agent_name %in% top_agents$agent_name) %>% 
+  group_by(agent_name) %>% 
+  summarize(n_players = n(),
+            med_mv = median(market_value_in_gbp, na.rm = T),
+            med_high_mv = median(highest_market_value_in_gbp, na.rm = T)) %>% 
+  ggplot(aes(y = reorder(agent_name, n_players), x = n_players,
+             fill = med_mv)) +
+  geom_col() # Gestifute is still weirdly high here, perhaps even more so
+
+players %>% 
+  filter(agent_name %in% top_agents$agent_name) %>% 
+  group_by(agent_name) %>% 
+  summarize(n_players = n(),
+            med_mv = median(market_value_in_gbp, na.rm = T),
+            med_high_mv = median(highest_market_value_in_gbp, na.rm = T)) %>% 
+  ggplot(aes(y = reorder(agent_name, n_players), x = n_players,
+             fill = med_high_mv)) +
+  geom_col() # Same here
+
+
+players %>% 
+  filter(!is.na(club_pretty_name) & club_pretty_name != "") %>% 
+  count(club_pretty_name) %>% 
+  arrange(desc(n)) %>% 
+  head(15) %>% 
+  ggplot(aes(y = reorder(club_pretty_name, n), x = n)) +
+  geom_col()
+
+# Nothing too crazy
+
+# Here's a thought: a club that's paying Player A a lot of money doesn't want to pay Player B as much
+# Can we make this a feature in the model? Maybe "total club spend" or something?
+# Might also have a non-linear relationship - some clubs are willing to just shell it out, others are not
+# Can we find any data on clubs themselves? This could be like a multi-level modeling jaunt
 ```
 
 TODO: Look at missing data
 TODO: correlate counts of birth country & citizenship country (how do they determine citizenship, particularly for dual citizens?)
+
+```{r}
+summary(players)
+```
+
+
+# Ideas
+
+- Club specifics - are certain clubs willing to spend more than others?
+- This could be a Bayesian model - update over time as more information comes in (via the API connection), predict value as it changes over time
