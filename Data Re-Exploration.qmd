@@ -179,8 +179,14 @@ players %>%
 TODO: Look at missing data
 TODO: correlate counts of birth country & citizenship country (how do they determine citizenship, particularly for dual citizens?)
 
-```{r}
+```{r summary and missing values}
 summary(players)
+
+for(i in 1:21){
+  testcol <- players[,i]
+  testcol <- replace(testcol, testcol == "", NA)
+  print(c(colnames(players[i]), sum(is.na(testcol))))
+}
 ```
 
 
