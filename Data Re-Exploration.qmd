@@ -209,6 +209,72 @@ corr_mat %>%
   cor() # Very high correlation
 ```
 
+## Player Valuations
+
+```{r Data Exp Player Valuations}
+glimpse(player_valuations)
+
+player_valuations %>% 
+  group_by(player_id) %>% 
+  count() %>% 
+  summary()
+# There are people with only one, but the median is 14 and mean 15 - some as high as 50
+
+player_valuations %>% 
+  group_by(player_id) %>% 
+  count() %>% 
+  ungroup() %>% 
+  select(n) %>% 
+  pull() %>% 
+  hist()
+
+player_valuations %>% 
+  mutate(date = as.Date(date)) %>% 
+  ggplot(aes(x = date)) +
+  geom_density()
+# More valuations at later dates, except a steep fall-off right at the end (incomplete season?)
+
+hist(player_valuations$market_value)
+hist(log(player_valuations$market_value)) # Close
+
+player_valuations %>% 
+  mutate(date = as.Date(date)) %>% 
+  group_by(date) %>% 
+  summarize(med_value = median(market_value), mean_value = mean(market_value)) %>% 
+  pivot_longer(cols = c(med_value, mean_value)) %>% 
+  ggplot(aes(x = date, y = value, color = name)) +
+  geom_smooth(se = F)
+# Weirdly, valuations were much higher in the early years, and then fall off until about 2015, and then come back up
+# Makes me think we can't trust any data before 2015
+
+
+player_valuations %>% 
+  group_by(current_club_id) %>% 
+  count() %>% 
+  arrange(desc(n))
+# No super crazy outliers
+```
+
+```{r Summary and Missing Values}
+player_valuations %>% 
+  mutate(date = as.Date(date),
+         datetime = as.Date(datetime),
+         dateweek = as.Date(dateweek),
+         current_club_id = factor(current_club_id),
+         player_id = factor(player_id),
+         player_club_domestic_competition_id = factor(player_club_domestic_competition_id)) %>% 
+  summary()
+
+
+for(i in 1:7){
+  testcol <- player_valuations[,i]
+  testcol <- replace(testcol, testcol == "", NA)
+  print(c(colnames(player_valuations[i]), sum(is.na(testcol))))
+}
+```
+
+
+
 
 
 # Ideas
